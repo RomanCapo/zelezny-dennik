@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#111315">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -57,6 +57,11 @@
   --shadow:0 8px 30px #10141a1f;
   color-scheme:light}
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none}
+body{overscroll-behavior:none}
+html,body,button,a,input,select,textarea,label{touch-action:manipulation}
+button,nav,.chip,.excard,.pill,.eyebrow,h1,h2,h3,.brand,.stat,.wx-top,.sets th{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,select,textarea{font-size:16px!important}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--body);-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
@@ -819,6 +824,9 @@ function openSession(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;cons
 "use strict";
 (function(){
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  /* zablokovanie zoomu ako v natívnej appke (pinch aj dvojité ťuknutie) */
+  ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+  document.addEventListener("touchmove",e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
   if(!("serviceWorker" in navigator))return;
   let reloading=false;
   navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloading)return;reloading=true;location.reload()});
