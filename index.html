@@ -118,6 +118,11 @@ svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke
 /* lists */
 .list{display:flex;flex-direction:column;gap:8px}
 .tpl{display:flex;flex-direction:column;gap:10px}
+.goals{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;font-size:13px}
+.goals li{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--line)}
+.goals li:first-child{border-top:0}
+.goals li span{color:var(--muted);min-width:0}
+.goals li b{font-weight:700;white-space:nowrap;text-align:right}
 .tpl-ex{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--surface2);white-space:nowrap}
 .pill.pr{background:var(--red-soft);color:var(--red)}
@@ -177,7 +182,9 @@ ol.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;m
 .sets{width:100%;border-collapse:separate;border-spacing:0 4px}
 .sets th{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;text-align:center;padding:0 2px}
 .sets td{text-align:center;padding:0 2px;vertical-align:middle}
-.sets td.n{font-weight:800;width:30px}
+.sets td.n{font-weight:800;width:38px;line-height:1.1}
+.sets small.tgt{display:block;font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;margin-top:2px}
+.sets tr.extra td.n{color:var(--muted)}
 .sets td.prev{color:var(--muted);font-size:13px;width:74px}
 .sets td.prev button{border:0;background:none;color:inherit;padding:4px;font-variant-numeric:tabular-nums}
 .sets input{width:100%;max-width:78px;text-align:center;background:var(--surface2);border:1px solid transparent;border-radius:9px;height:38px;font-weight:700;font-variant-numeric:tabular-nums;font-size:16px}
@@ -449,10 +456,11 @@ function vHome(v){
   v.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>openExercise(b.dataset.ex));
 }
 function nextProgTpl(){const progT=S.templates.filter(t=>t.prog);if(!progT.length)return null;const last=real().find(s=>progT.some(t=>t.id===s.tpl));if(!last)return progT[0];const i=progT.findIndex(t=>t.id===last.tpl);return progT[(i+1)%progT.length]}
+function goalList(rows){return `<ul class="goals">${rows.map(([id,n,reps])=>`<li><span>${esc(exSK(id)||exName(id))}</span><b class="num">${esc(goalTxt(n,reps))}</b></li>`).join("")}</ul>`}
 function tplCard(t){const last=real().find(s=>s.tpl===t.id);const nx=nextProgTpl();
   return `<div class="card tpl"><div class="row between" style="align-items:flex-start"><div style="min-width:0"><div class="row" style="gap:8px"><h3>${esc(t.name)}</h3>${nx&&nx.id===t.id?`<span class="pill ok">na rade</span>`:""}</div><div class="muted" style="font-size:12.5px">${t.ex.length} cvikov · ${t.ex.reduce((a,e)=>a+e.sets,0)} sérií${last?" · naposledy "+dateSK(last.end):""}</div></div>
    <button class="icon-btn" data-edit="${t.id}" aria-label="Upraviť ${esc(t.name)}">${I.dots}</button></div>
-   <div class="tpl-ex">${t.ex.map(e=>esc(exName(e.id))).join(" · ")}</div>
+   ${goalList(t.ex.map(e=>[e.id,e.sets,e.reps]))}
    <button class="btn primary" data-start="${t.id}">Začať tréning</button></div>`}
 function bindTplCards(v){v.querySelectorAll("[data-start]").forEach(b=>b.onclick=()=>startWorkout(S.templates.find(t=>t.id===b.dataset.start)));
   v.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editTemplate(S.templates.find(t=>t.id===b.dataset.edit)))}
@@ -462,7 +470,7 @@ function vPlan(v){
   v.innerHTML=`<div class="hero"><div><div class="eyebrow">Moje rutiny</div><h1>Tréningy</h1></div><button class="btn primary" id="nt">${I.plus}Nový</button></div>
   <div class="section">${S.templates.length?`<div class="list">${S.templates.map(tplCard).join("")}</div>`:`<div class="empty"><b style="color:var(--fg)">Zatiaľ nemáš vlastný tréning</b><div>Poskladaj si ho z databázy cvikov alebo si skopíruj vzorový program nižšie.</div><button class="btn primary" id="nt2">${I.plus}Poskladať tréning</button></div>`}</div>
   ${PROGRAMS.map((pg,pi)=>{const added=S.templates.some(t=>t.prog===pg.key);return `<div class="section"><div><h2>${esc(pg.name)}</h2><div class="muted" style="font-size:13px;max-width:65ch">${esc(pg.src)}</div></div>
-   <div class="card stack"><div class="list" style="gap:10px">${pg.days.map((d,i)=>`<div><div class="row" style="gap:8px"><span class="pill blue num">${i+1}</span><b>${esc(d.name)}</b><span class="muted" style="font-size:12.5px">${d.ex.length} cvikov · ${d.ex.reduce((a,e)=>a+e[1],0)} sérií</span></div><div class="tpl-ex" style="margin-top:3px">${d.ex.map(e=>esc(exSK(e[0])||exName(e[0]))).join(" · ")}</div></div>`).join("")}</div>
+   <div class="card stack"><div class="list" style="gap:10px">${pg.days.map((d,i)=>`<div><div class="row" style="gap:8px"><span class="pill blue num">${i+1}</span><b>${esc(d.name)}</b><span class="muted" style="font-size:12.5px">${d.ex.length} cvikov · ${d.ex.reduce((a,e)=>a+e[1],0)} sérií</span></div><div style="margin-top:6px">${goalList(d.ex)}</div></div>`).join("")}</div>
    <button class="btn ${added?"ghost":"primary"}" data-prog="${pi}">${added?"Pridať znova":I.plus+"Pridať všetkých "+pg.days.length+" tréningov"}</button></div></div>`}).join("")}
   <div class="section"><div><h2>Vzorové programy</h2><div class="muted" style="font-size:13px">Pridaj si ich do svojich tréningov a uprav podľa seba.</div></div>
    <div class="list">${EXAMPLES.map((t,i)=>`<div class="card tpl"><div class="row between"><h3>${esc(t.name)}</h3><span class="pill yel">vzor</span></div><div class="tpl-ex">${t.ex.map(e=>esc(exSK(e[0])||exName(e[0]))+" "+e[1]+"×").join(" · ")}</div><button class="btn ghost" data-copy="${i}">${I.plus}Pridať do mojich</button></div>`).join("")}</div></div>`;
@@ -602,10 +610,16 @@ function addToTemplateMenu(id){
 }
 
 /* ---------- AKTÍVNY TRÉNING ---------- */
+/* cieľ série × opakovania */
+function setTargets(n,reps){reps=String(reps||"").trim();if(!reps)return Array(n).fill("");
+  const parts=reps.split(",").map(s=>s.trim()).filter(Boolean);const out=[];
+  if(parts.every(p=>/^\d+\s*[×x]\s*\S/.test(p))){parts.forEach(p=>{const m=p.match(/^(\d+)\s*[×x]\s*(.+)$/);for(let i=0;i<+m[1];i++)out.push(m[2].trim())})}
+  const base=out.length?out[out.length-1]:reps;while(out.length<n)out.push(base);return out}
+function goalTxt(n,reps){reps=String(reps||"").trim();if(/[×x]/.test(reps))return reps.replace(/\s*x\s*/g,"×");return reps?`${n} × ${reps}`:`${n} ${pl(n,"séria","série","sérií")}`}
 function newSets(id,n){const last=PR[id]&&PR[id].lastSets;return Array.from({length:n},(_,i)=>{const l=last&&(last[i]||last[last.length-1]);return {w:"",r:"",done:false,pw:l?l.w:"",pr:l?l.r:""}})}
 function startWorkout(t){if(S.active){openWorkout();return}
   S.active={id:uid(),name:t?t.name:"Tréning "+new Date().toLocaleDateString("sk-SK",{day:"numeric",month:"numeric"}),tpl:t?t.id:null,start:Date.now(),
-   ex:t?t.ex.map(e=>({id:e.id,reps:e.reps||"",rest:defRest(e.id),sets:newSets(e.id,e.sets)})):[]};
+   ex:t?t.ex.map(e=>({id:e.id,reps:e.reps||"",tsets:e.sets,rest:defRest(e.id),sets:newSets(e.id,e.sets)})):[]};
   saveActive(true);openWorkout();render();if(!t)setTimeout(()=>pickExercises(addExToActive),50)}
 function defRest(id){const x=EXM[id];if(!x)return 90;return x.m==="compound"&&["barbell"].includes(x.e)?150:x.m==="compound"?120:75}
 function addExToActive(ids){if(!S.active)return;ids.forEach(id=>S.active.ex.push({id,rest:defRest(id),sets:newSets(id,3)}));saveActive(true);const w=$("#wo");if(w)w._re();render()}
@@ -645,15 +659,15 @@ function openWorkout(){if(!S.active)return;if($("#wo"))return;
    return `<div class="wx" data-ei="${ei}">
     <div class="wx-top"><div class="anim" data-anim="${esc(e.id)}" style="border-radius:11px;width:64px"><span class="a" style="${frStyle(e.id,0)}"></span><span class="b" style="${frStyle(e.id,1)}"></span></div>
      <div style="min-width:0"><button class="wx-name" data-info="${esc(e.id)}">${esc(exName(e.id))}</button>
-      <div class="target">${e.reps?`<span>cieľ <b>${esc(e.reps)} opak.</b></span>`:""}${p?`<span>PR <b class="num">${kg(p.maxW)}×${p.maxWr}</b></span><span>1RM <b class="num">${k1(p.e1)}</b></span>`:`<span>Prvýkrát — nastavíš základ</span>`}<span>pauza <b class="num">${Math.floor(e.rest/60)}:${String(e.rest%60).padStart(2,"0")}</b></span></div></div>
+      <div class="target">${(()=>{const ts=e.tsets||e.sets.length,dn=e.sets.filter(s=>s.done).length;return `<span>cieľ <b class="num">${esc(goalTxt(ts,e.reps))}</b></span><span class="pill num ${dn>=ts?"ok":""}" style="padding:1px 7px;font-size:11.5px">${dn}/${ts} sérií</span>`})()}${p?`<span>PR <b class="num">${kg(p.maxW)}×${p.maxWr}</b></span><span>1RM <b class="num">${k1(p.e1)}</b></span>`:`<span>Prvýkrát — nastavíš základ</span>`}<span>pauza <b class="num">${Math.floor(e.rest/60)}:${String(e.rest%60).padStart(2,"0")}</b></span></div></div>
      <button class="icon-btn" data-exmenu="${ei}" aria-label="Možnosti cviku">${I.dots}</button></div>
     <table class="sets"><thead><tr><th>#</th><th>Minule</th><th>kg</th><th>Opak.</th><th><span style="position:absolute;left:-9999px">Hotovo</span>✓</th></tr></thead><tbody>
-    ${e.sets.map((s,si)=>`<tr class="${s.done?"done":""}" data-si="${si}"><td class="n">${si+1}</td>
+    ${(()=>{const tg=setTargets(e.sets.length,e.reps),ts=e.tsets||e.sets.length;return e.sets.map((s,si)=>`<tr class="${s.done?"done":""}${si>=ts?" extra":""}" data-si="${si}"><td class="n">${si+1}${tg[si]&&si<ts?`<small class="tgt num">${esc(tg[si])}</small>`:si>=ts?`<small class="tgt">navyše</small>`:""}</td>
       <td class="prev">${s.pw!==""&&s.pw!=null?`<button data-fill="${si}" class="num" aria-label="Použiť minulú hodnotu">${fmt(+s.pw)}×${s.pr}</button>`:"—"}</td>
       <td><input inputmode="decimal" data-w="${si}" value="${esc(s.w)}" placeholder="${s.pw!==""&&s.pw!=null?esc(fmt(+s.pw)):"0"}" aria-label="Váha série ${si+1}"></td>
       <td><input inputmode="numeric" data-r="${si}" value="${esc(s.r)}" placeholder="${s.pr!==""&&s.pr!=null?esc(s.pr):"0"}" aria-label="Opakovania série ${si+1}"></td>
       <td><button class="ck ${s.done?"on":""}" data-done="${si}" aria-label="Séria ${si+1} hotová" aria-pressed="${s.done}">${I.check}</button></td></tr>
-      <tr><td colspan="5" data-hint="${si}">${hintFor(e.id,ei,si)}</td></tr>`).join("")}
+      <tr><td colspan="5" data-hint="${si}">${hintFor(e.id,ei,si)}</td></tr>`).join("")})()}
     </tbody></table>
     <div class="row"><button class="btn sm ghost" data-addset="${ei}">${I.plus}Séria</button>${e.sets.length>1?`<button class="btn sm ghost" data-rmset="${ei}">Odobrať sériu</button>`:""}</div></div>`};
   const bind=()=>{const A=S.active;const q=s=>wo.querySelector(s);
